@@ -1,57 +1,56 @@
-import { FormEvent, useRef, useState } from "react";
 //'div.mb-3>label.form-label+input.form-control'
 //div.mb-3>label.form-label+input[type=number].form-control
-import { useForm } from "react-hook-form";
+import { FieldValues, useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const schema = z.object({
+  name: z.string().min(3, { message: "Name must be at least 3 bananas" }),
+  age: z
+    .number({ invalid_type_error: "Age field is required." })
+    .min(18, { message: "You must be 18 years or older to participate" }),
+});
+
+type FormData = z.infer<typeof schema>;
 
 const Form = () => {
-  const form = useForm();
-  console.log(form);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid },
+  } = useForm<FormData>({ resolver: zodResolver(schema) });
 
-  const nameRef = useRef<HTMLInputElement>(null);
-  const ageRef = useRef<HTMLInputElement>(null);
-  const person = { name: "", age: 0 };
-  const [person2, setPerson2] = useState({ name: "", age: "" });
+  console.log(errors);
 
-  const handleSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    if (nameRef.current !== null) person.name = nameRef.current.value;
-    if (ageRef.current !== null) person.age = parseInt(ageRef.current.value);
-    console.log(person);
-  };
+  const onSubmit = (data: FieldValues) => console.log(data);
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit(onSubmit)}>
       <div className="mb-3">
-        <label htmlFor="name" className="form-label">
+        <label htmlFor="appel" className="form-label">
           Name
         </label>
         <input
-          onChange={(event) =>
-            setPerson2({ ...person2, name: event.target.value })
-          }
-          value={person2.name}
-          ref={nameRef}
+          {...register("name")}
           id="name"
           type="text"
           className="form-control"
         />
+        {errors.name && <p className="text-danger">{errors.name.message}</p>}
       </div>
       <div className="mb-3">
-        <label htmlFor="age" className="form-label">
+        <label htmlFor="banaan" className="form-label">
           Age
         </label>
         <input
-          onChange={(event) =>
-            setPerson2({ ...person2, age: parseInt(event.target.value) })
-          }
-          value={person2.age}
-          ref={ageRef}
+          {...register("age", { valueAsNumber: true })}
           id="age"
           type="number"
           className="form-control"
         />
+        {errors.age && <p className="text-danger">{errors.age.message}</p>}
       </div>
-      <button className="btn btn-primary" type="submit">
+      <button disabled={!isValid} className="btn btn-primary" type="submit">
         Submit
       </button>
     </form>
